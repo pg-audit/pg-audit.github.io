@@ -1,0 +1,285 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Audit - pg_audit_test</title><style>
+    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#f4f6f9; color:#333; line-height:1.6; margin:0; padding:0; }
+    .container { max-width:1200px; margin:0 auto; padding:20px; }
+    .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:white; padding:30px; border-radius:12px; margin-bottom:25px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    .header h1 { margin:0 0 10px 0; font-size:28px; }
+    .header p { margin:0; opacity:0.9; font-size:14px; }
+    .stats-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-bottom:30px; }
+    .stat-card { background:white; padding:20px; border-radius:10px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.05); }
+    .stat-num { font-size:32px; font-weight:bold; }
+    .stat-label { color:#666; font-size:13px; text-transform:uppercase; letter-spacing:1px; }
+    .section { margin-bottom:40px; }
+    .section h2 { font-size:20px; color:#1e3c72; border-bottom:2px solid #e9ecef; padding-bottom:10px; margin-bottom:20px; }
+    .count-badge { background:#e9ecef; color:#495057; font-size:14px; padding:2px 8px; border-radius:12px; margin-left:10px; }
+    .card { background:white; border-radius:8px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; }
+    .card-header { padding:15px 20px; background:#fff; }
+    .card-header h3 { margin:10px 0 5px 0; font-size:18px; color:#212529; }
+    .object-name { font-family:'Consolas', monospace; font-size:13px; color:#6c757d; background:#f8f9fa; padding:2px 6px; border-radius:4px; display:inline-block; }
+    .card-body { padding:0 20px 20px 20px; }
+    .badge { display:inline-block; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; color:white; text-transform:uppercase; }
+    .priority-badge { display:inline-block; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold; margin-left:8px; }
+    .priority-must { background:#dc3545; } .priority-should { background:#fd7e14; } .priority-observe { background:#6c757d; }
+    .impact-box { background:#fff5f5; border-left:3px solid #dc3545; padding:10px; margin-bottom:15px; font-size:14px; color:#721c24; }
+    .rec-box { background:#e8f5e9; border-left:3px solid #28a745; padding:10px; margin-top:15px; font-size:14px; color:#155724; }
+    pre { background:#2d2d2d; color:#d4d4d4; padding:10px; border-radius:6px; overflow-x:auto; font-family:'Consolas', monospace; font-size:12px; white-space:pre-wrap; }
+    .footer { text-align:center; color:#adb5bd; font-size:12px; margin-top:50px; padding-bottom:20px; }
+    .company-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef; }
+    .executive-summary { background: #f8d7da; border-left: 5px solid #dc3545; padding: 15px; margin-bottom: 25px; border-radius: 8px; }
+    .quick-wins { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #28a745; }
+    .benchmarks { background: #f4f6f9; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
+    .progress-bar-track { background:#e9ecef; border-radius:10px; height:18px; overflow:hidden; width:100%; }
+    .progress-bar-fill { height:100%; border-radius:10px; transition:width 0.3s; }
+    .progress-bar-label { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+    </style></head>
+        <body><div class="container">
+        <div class="company-header">
+        <div>
+        <div style="font-size:22px;font-weight:bold;color:#1e3c72">PostgreSQL Health Check</div>
+        </div>
+        <div style="text-align:right;font-size:13px">
+        &#x1F4F1; Telegram: <a href="https://t.me/pg_audit_cases">pg_audit_cases</a>
+        </div>
+        </div>
+        <div class="header">
+        <h1>PostgreSQL Diagnostic Report</h1>
+        <p>DB: pg_audit_test | Uptime: 0.9h | Collected: 2026-07-10T05:13:04.416553+00:00</p>
+        </div>
+        
+            <div style="background:#dc3545; color:white; border-radius:8px; padding:20px; margin-bottom:25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <div style="font-size:20px; font-weight:bold;">&#x1F6A8; КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ &#x1F6A8;</div>
+            <div style="margin-top:10px;">База данных работает всего <strong>0.9 часов</strong> (требуется минимум 24 часа для статистически значимых данных).</div>
+            <div style="margin-top:5px;">ВСЕ статистические выводы (Cache Hit Ratio, Dead Tuples, Unused Indexes) имеют пометку <strong>LOW CONFIDENCE</strong> и требуют подтверждения.</div>
+            <div style="margin-top:5px;">Детерминированные правила (Primary Key, Foreign Key) — НЕ зависят от uptime и являются достоверными.</div>
+            </div>
+        
+        <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:15px; margin-bottom:25px; font-size:13px; color:#856404;">
+        <strong>&#x26A0;&#xFE0F; Важное уведомление:</strong>
+        Данный отчёт сформирован на основе <strong>экспертной методологии анализа</strong> метаданных PostgreSQL (размеры, счётчики, структуры). Тексты SQL-запросов, имена пользователей и содержимое данных <strong>не собирались и не анализировались</strong>, что ограничивает глубину диагностики по ряду параметров.
+        <br><br>
+        Все SQL-команды составлены в соответствии с лучшими практиками администрирования PostgreSQL и проверены на корректность синтаксиса. Применимость каждой рекомендации обусловлена спецификой вашей инфраструктуры &mdash; перед внедрением на Production <strong>обязательно</strong> протестируйте изменения на staging-окружении и убедитесь в наличии актуальных резервных копий.
+        <br><br>
+        Результаты анализа предоставляются &laquo;как есть&raquo; (as-is). Автор не несёт ответственности за сбои, потерю данных или простои, возникшие вследствие применения рекомендаций без предварительного тестирования в условиях конкретной инфраструктуры.
+        </div>
+        <div style="background:#e7f3ff; border:1px solid #2196F3; border-radius:8px; padding:15px; margin-bottom:25px; font-size:12px; color:#1565C0;">
+        <strong>&#x2139;&#xFE0F; Пояснения к рекомендациям:</strong>
+        <ul style="margin:8px 0 0 20px; padding:0; line-height:1.7;">
+        <li><strong>work_mem:</strong> Рекомендуемое значение рассчитано индивидуально под конфигурацию вашего сервера (max_connections).
+        Формула безопасности: work_mem &times; max_connections &le; 6 GB. При изменении нагрузки пересчитайте пропорционально.</li>
+        <li><strong>Cache Hit Ratio:</strong> Порог 90% &mdash; универсальный индикатор здоровья БД. Для OLTP-систем рекомендуется &ge;99%, для аналитических (DWH) допустимы отклонения.</li>
+        <li><strong>Partial Index:</strong> Рекомендация основана на эвристическом анализе имен столбцов (флаги/статусы). Перед созданием убедитесь в неравномерном распределении данных (например, 95%/5%).</li>
+        <li><strong>Оценка раздутия таблиц:</strong> Является приблизительной (без расширения pgstattuple). Для точной диагностики установите pgstattuple.</li>
+        <li><strong>Общее:</strong> Рекомендации с пометкой LOW CONFIDENCE требуют дополнительного ручного анализа. Все изменения параметров через ALTER SYSTEM можно отменить через ALTER SYSTEM RESET.</li>
+        </ul>
+        </div>
+        <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num" style="color:#dc3545">0</div><div class="stat-label">Critical</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:#fd7e14">2</div><div class="stat-label">High</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:#ffc107">1</div><div class="stat-label">Medium</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:#6c757d">1</div><div class="stat-label">Low</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:#17a2b8">2</div><div class="stat-label">Info</div></div>
+        </div>
+        <div class="executive-summary"><h3>&#x1F534; Срочные действия</h3><ul><li><strong>[HIGH] Нет Primary Key</strong> &mdash; Строк: 100</li><li><strong>[HIGH] Нет Primary Key</strong> &mdash; Строк: 10</li><li><strong>[MEDIUM] Много Seq Scan</strong> &mdash; 5,000,000 строк прочитано через Seq Scan</li><li><strong>[LOW] Отсутствие индекса на большой таблице</strong> &mdash; Размер: 156.2 MB | Seq Scans: 7.0</li><li><strong>[INFO] Информация: статистика использования индексов неполная</strong> &mdash; База работает 0.9 часов (менее 24)</li></ul></div>
+        
+        
+            <div style="margin-bottom:25px">
+            <h3 style="color:#1e3c72;border-bottom:2px solid #e9ecef;padding-bottom:10px">&#x1F4CB; План исправлений</h3>
+            <table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,0.05)">
+            <thead style="background:#f8f9fa"><tr>
+            <th style="padding:8px;border:1px solid #dee2e6;width:40px">#</th>
+            <th style="text-align:left;padding:8px;border:1px solid #dee2e6">Приоритет</th>
+            <th style="text-align:left;padding:8px;border:1px solid #dee2e6">Проблема</th>
+            <th style="text-align:left;padding:8px;border:1px solid #dee2e6">Объект</th>
+            <th style="text-align:center;padding:8px;border:1px solid #dee2e6;width:60px">Риск</th>
+            <th style="text-align:left;padding:8px;border:1px solid #dee2e6;width:80px">Время</th>
+            </tr></thead>
+            <tbody>
+            
+                <tr>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center">1</td>
+                <td style="padding:8px;border:1px solid #dee2e6"><span style="color:#fd7e14">Рекомендуется</span></td>
+                <td style="padding:8px;border:1px solid #dee2e6">Нет Primary Key</td>
+                <td style="padding:8px;border:1px solid #dee2e6;font-family:Consolas,monospace;font-size:12px">public.pgbench_tellers</td>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center"><span style="color:#fd7e14">&#x1F7E0;</span></td>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center">~30 мин</td>
+                </tr>
+                <tr>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center">2</td>
+                <td style="padding:8px;border:1px solid #dee2e6"><span style="color:#fd7e14">Рекомендуется</span></td>
+                <td style="padding:8px;border:1px solid #dee2e6">Нет Primary Key</td>
+                <td style="padding:8px;border:1px solid #dee2e6;font-family:Consolas,monospace;font-size:12px">public.pgbench_branches</td>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center"><span style="color:#fd7e14">&#x1F7E0;</span></td>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center">~30 мин</td>
+                </tr>
+                <tr>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center">3</td>
+                <td style="padding:8px;border:1px solid #dee2e6"><span style="color:#fd7e14">Рекомендуется</span></td>
+                <td style="padding:8px;border:1px solid #dee2e6">Много Seq Scan</td>
+                <td style="padding:8px;border:1px solid #dee2e6;font-family:Consolas,monospace;font-size:12px">public.pgbench_accounts</td>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center"><span style="color:#ffc107">&#x1F7E1;</span></td>
+                <td style="padding:8px;border:1px solid #dee2e6;text-align:center">~30 мин</td>
+                </tr>
+            </tbody></table>
+            <p style="margin-top:10px;font-size:12px;color:#6c757d">
+            Всего: 0 срочных, 3 рекомендуемых, 3 наблюдений
+            &nbsp;|&nbsp; &#x1F7E2; Низкий &nbsp; &#x1F7E1; Средний &nbsp; &#x1F7E0; Высокий
+            </p>
+            </div>
+        <div class="benchmarks"><h3 style="margin-top:0">&#x1F4CA; Бенчмарки</h3>
+            <table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,0.05)">
+            <thead style="background:#f8f9fa"><tr>
+            <th style="text-align:left;padding:12px;border:1px solid #dee2e6">Метрика</th>
+            <th style="text-align:left;padding:12px;border:1px solid #dee2e6">Значение</th>
+            <th style="text-align:left;padding:12px;border:1px solid #dee2e6">Норма</th>
+            <th style="text-align:left;padding:12px;border:1px solid #dee2e6">Оценка</th>
+            </tr></thead>
+            <tbody>
+            
+            <tr>
+            <td style="padding:12px;border:1px solid #dee2e6;vertical-align:middle">Cache Hit Ratio</td>
+            <td style="padding:12px;border:1px solid #dee2e6">
+                <div class="progress-bar-label">
+                    <span style="font-weight:bold;font-size:16px">96.8%</span>
+                    <span style="font-size:11px;color:#6c757d">норма &gt;99%</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" style="width:96.8%;background:#856404"></div>
+                </div>
+            </td>
+            <td style="padding:12px;border:1px solid #dee2e6">&gt;99%</td>
+            <td style="padding:12px;border:1px solid #dee2e6;color:#856404;font-weight:bold">⚠️ НЕДОСТАТОЧНО ДАННЫХ (uptime < 24ч)</td>
+            </tr>
+                <tr>
+                <td style="padding:12px;border:1px solid #dee2e6">work_mem</td>
+                <td style="padding:12px;border:1px solid #dee2e6">64.0MB</td>
+                <td style="padding:12px;border:1px solid #dee2e6">&ge;4MB (рек. &ge;64MB)</td>
+                <td style="padding:12px;border:1px solid #dee2e6;color:#28a745;font-weight:bold">Отлично</td>
+                </tr>
+            </tbody></table><p style="margin-top:10px;font-size:12px;color:#856404;background:#fff3cd;padding:8px;border-radius:4px;">&#x26A0;&#xFE0F; Статистика собрана за 0.9 часов работы БД. Для достоверной оценки требуется минимум 24 часа.</p></div>
+        <div class="section"><h2>&#x1F7E0; HIGH Issues <span class="count-badge">2</span></h2>
+                <div class="card">
+                <div class="card-header" style="border-left: 5px solid #fd7e14;">
+                <span class="badge" style="background:#fd7e14;">HIGH</span>
+                <span class="badge" style="background:#6f42c1;">DETERMINISTIC</span>
+                <span class="priority-badge priority-should">SHOULD_FIX</span>
+                
+                <h3>Нет Primary Key</h3>
+                <div class="object-name">public.pgbench_tellers</div>
+                </div>
+                <div class="card-body">
+                <div class="impact-box"><strong>Impact:</strong> Блокирует логическую репликацию, усложняет обслуживание</div>
+                <p>Строк: 100</p>
+                <div class="rec-box"><strong>Recommendation:</strong> Добавьте Primary Key</div>
+                <div style="display:inline-block;background:#fde2d4;border:1px solid #fd7e14;border-radius:4px;padding:3px 8px;font-size:11px;color:#7a3b0e;margin-bottom:6px;">&#x1F7E0; Высокий риск</div><pre>-- Шаг 1: Добавить колонку, если её нет (быстро, без блокировки)
+ALTER TABLE &quot;public&quot;.&quot;pgbench_tellers&quot; ADD COLUMN IF NOT EXISTS id BIGSERIAL;
+-- Шаг 2: Создать уникальный индекс CONCURRENTLY (без блокировки записи)
+CREATE UNIQUE INDEX CONCURRENTLY &quot;pgbench_tellers_pkey&quot; ON &quot;public&quot;.&quot;pgbench_tellers&quot;(id);
+-- Шаг 3: Назначить PK через готовый индекс (мгновенно)
+ALTER TABLE &quot;public&quot;.&quot;pgbench_tellers&quot; ADD PRIMARY KEY USING INDEX &quot;pgbench_tellers_pkey&quot;;</pre>
+                <div style="margin-top:10px;font-size:12px;color:#28a745">
+                <strong>Confidence:</strong> Deterministic rule — high confidence (99%)
+                </div>
+                </div>
+                </div>
+                <div class="card">
+                <div class="card-header" style="border-left: 5px solid #fd7e14;">
+                <span class="badge" style="background:#fd7e14;">HIGH</span>
+                <span class="badge" style="background:#6f42c1;">DETERMINISTIC</span>
+                <span class="priority-badge priority-should">SHOULD_FIX</span>
+                
+                <h3>Нет Primary Key</h3>
+                <div class="object-name">public.pgbench_branches</div>
+                </div>
+                <div class="card-body">
+                <div class="impact-box"><strong>Impact:</strong> Блокирует логическую репликацию, усложняет обслуживание</div>
+                <p>Строк: 10</p>
+                <div class="rec-box"><strong>Recommendation:</strong> Добавьте Primary Key</div>
+                <div style="display:inline-block;background:#fde2d4;border:1px solid #fd7e14;border-radius:4px;padding:3px 8px;font-size:11px;color:#7a3b0e;margin-bottom:6px;">&#x1F7E0; Высокий риск</div><pre>-- Шаг 1: Добавить колонку, если её нет (быстро, без блокировки)
+ALTER TABLE &quot;public&quot;.&quot;pgbench_branches&quot; ADD COLUMN IF NOT EXISTS id BIGSERIAL;
+-- Шаг 2: Создать уникальный индекс CONCURRENTLY (без блокировки записи)
+CREATE UNIQUE INDEX CONCURRENTLY &quot;pgbench_branches_pkey&quot; ON &quot;public&quot;.&quot;pgbench_branches&quot;(id);
+-- Шаг 3: Назначить PK через готовый индекс (мгновенно)
+ALTER TABLE &quot;public&quot;.&quot;pgbench_branches&quot; ADD PRIMARY KEY USING INDEX &quot;pgbench_branches_pkey&quot;;</pre>
+                <div style="margin-top:10px;font-size:12px;color:#28a745">
+                <strong>Confidence:</strong> Deterministic rule — high confidence (99%)
+                </div>
+                </div>
+                </div></div><div class="section"><h2>&#x1F7E1; MEDIUM Issues <span class="count-badge">1</span></h2>
+                <div class="card">
+                <div class="card-header" style="border-left: 5px solid #ffc107;">
+                <span class="badge" style="background:#ffc107;">MEDIUM</span>
+                <span class="badge" style="background:#6f42c1;">STATISTICAL</span>
+                <span class="priority-badge priority-should">SHOULD_FIX</span>
+                <span class="badge" style="background:#ffc107;color:#856404">&#x26A0;&#xFE0F; LOW CONF</span>
+                <h3>Много Seq Scan</h3>
+                <div class="object-name">public.pgbench_accounts</div>
+                </div>
+                <div class="card-body">
+                <div class="impact-box"><strong>Impact:</strong> Высокая нагрузка на I/O, медленные запросы</div>
+                <p>5,000,000 строк прочитано через Seq Scan</p>
+                <div class="rec-box"><strong>Recommendation:</strong> Создайте индексы на столбцы фильтрации WHERE</div>
+                <div style="display:inline-block;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:3px 8px;font-size:11px;color:#856404;margin-bottom:6px;">&#x1F7E1; Средний риск</div><pre>-- CREATE INDEX CONCURRENTLY idx_pgbench_accounts_col ON &quot;public&quot;.&quot;pgbench_accounts&quot; (col);</pre>
+                <div style="margin-top:10px;font-size:12px;color:#fd7e14">
+                <strong>Confidence:</strong> ⚠️ LOW CONFIDENCE: uptime 0.9h &lt; 24h
+                </div>
+                </div>
+                </div></div><div class="section"><h2>&#x1F535; LOW Issues <span class="count-badge">1</span></h2>
+                <div class="card">
+                <div class="card-header" style="border-left: 5px solid #6c757d;">
+                <span class="badge" style="background:#6c757d;">LOW</span>
+                <span class="badge" style="background:#6f42c1;">HEURISTIC</span>
+                <span class="priority-badge priority-observe">OBSERVE</span>
+                <span class="badge" style="background:#ffc107;color:#856404">&#x26A0;&#xFE0F; LOW CONF</span>
+                <h3>Отсутствие индекса на большой таблице</h3>
+                <div class="object-name">public.pgbench_accounts</div>
+                </div>
+                <div class="card-body">
+                <div class="impact-box"><strong>Impact:</strong> ~1093 MB прочитано через Seq Scan</div>
+                <p>Размер: 156.2 MB | Seq Scans: 7.0</p>
+                <div class="rec-box"><strong>Recommendation:</strong> Создайте индекс на часто фильтруемые столбцы</div>
+                <div style="display:inline-block;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:3px 8px;font-size:11px;color:#856404;margin-bottom:6px;">&#x1F7E1; Средний риск</div><pre>-- CREATE INDEX CONCURRENTLY idx_pgbench_accounts_col ON &quot;public&quot;.&quot;pgbench_accounts&quot; (col);</pre>
+                <div style="margin-top:10px;font-size:12px;color:#fd7e14">
+                <strong>Confidence:</strong> ⚠️ LOW CONFIDENCE: uptime 0.9h &lt; 24h
+                </div>
+                </div>
+                </div></div><div class="section"><h2>&#x2139; INFO Issues <span class="count-badge">2</span></h2>
+                <div class="card">
+                <div class="card-header" style="border-left: 5px solid #17a2b8;">
+                <span class="badge" style="background:#17a2b8;">INFO</span>
+                <span class="badge" style="background:#6f42c1;">HEURISTIC</span>
+                <span class="priority-badge priority-observe">OBSERVE</span>
+                
+                <h3>Информация: статистика использования индексов неполная</h3>
+                <div class="object-name">Database</div>
+                </div>
+                <div class="card-body">
+                <div class="impact-box"><strong>Impact:</strong> Статистика по индексам может быть неполной после перезапуска</div>
+                <p>База работает 0.9 часов (менее 24)</p>
+                <div class="rec-box"><strong>Recommendation:</strong> Повторите анализ через 24 часа работы базы данных</div>
+                <div style="display:inline-block;background:#d4edda;border:1px solid #28a745;border-radius:4px;padding:3px 8px;font-size:11px;color:#155724;margin-bottom:6px;">&#x1F7E2; Низкий риск</div><pre>-- Повторите аудит через 24 часа непрерывной работы</pre>
+                <div style="margin-top:10px;font-size:12px;color:#28a745">
+                <strong>Confidence:</strong> Uptime &lt; 24h — защита от ложных срабатываний
+                </div>
+                </div>
+                </div>
+                <div class="card">
+                <div class="card-header" style="border-left: 5px solid #17a2b8;">
+                <span class="badge" style="background:#17a2b8;">INFO</span>
+                <span class="badge" style="background:#6f42c1;">HEURISTIC</span>
+                <span class="priority-badge priority-observe">OBSERVE</span>
+                
+                <h3>Информация: статистика ROI индексов неполная</h3>
+                <div class="object-name">Database</div>
+                </div>
+                <div class="card-body">
+                <div class="impact-box"><strong>Impact:</strong> Статистика ROI индексов может быть неполной после перезапуска</div>
+                <p>База работает 0.9 часов (менее 24)</p>
+                <div class="rec-box"><strong>Recommendation:</strong> Повторите анализ через 24 часа работы базы данных</div>
+                <div style="display:inline-block;background:#d4edda;border:1px solid #28a745;border-radius:4px;padding:3px 8px;font-size:11px;color:#155724;margin-bottom:6px;">&#x1F7E2; Низкий риск</div><pre>-- Повторите аудит через 24 часа непрерывной работы</pre>
+                <div style="margin-top:10px;font-size:12px;color:#28a745">
+                <strong>Confidence:</strong> Uptime &lt; 24h — защита от ложных срабатываний
+                </div>
+                </div>
+                </div></div>
+        
+        <div class="footer">&copy; 2026 PostgreSQL Health Check</div>
+        </div></body></html>
